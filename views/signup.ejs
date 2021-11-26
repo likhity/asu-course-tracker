@@ -1,0 +1,74 @@
+<%- include("partials/header") %>
+
+<form autocomplete="off" class="signup">
+  <h2>Sign up</h2>
+  <label for="email">Email</label>
+  <input type="text" name="email" required />
+  <div class="email error"></div>
+  <label for="password">Password</label>
+  <input type="password" name="password" required />
+  <label for="confirm">Confirm Password</label>
+  <input type="password" name="confirm" required />
+  <div class="password error"></div>
+  <label for="phone">Phone Number</label>
+  <input type="phone" name="phone" required />
+  <div class="phone error"></div>
+  <button>Sign up</button>
+</form>
+
+<script>
+  const form = document.querySelector("form");
+  const emailError = document.querySelector(".email.error");
+  const passwordError = document.querySelector(".password.error");
+  const phoneError = document.querySelector(".phone.error");
+
+  const confirmPasswordInput = document.querySelector('input[name="confirm"]');
+    
+    confirmPasswordInput.addEventListener("input", e => {
+      console.log('firing')
+      if (e.target.value !== form.password.value) {
+        passwordError.textContent = "Passwords do not match";
+      } else {
+        passwordError.textContent = "";
+      }
+    })
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    emailError.textContent = "";
+    passwordError.textContent = "";
+
+    // get the values
+    const email = form.email.value;
+    const password = form.password.value;
+    const confirm = form.confirm.value;
+    const phoneNumber = form.phone.value;
+
+    if (password !== confirm) {
+      passwordError.textContent = "Passwords do not match";
+      return;
+    }
+
+    try {
+      const res = await fetch("/signup", {
+        method: "POST",
+        body: JSON.stringify({ email, password, confirm, phoneNumber }),
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      if (data.errors) {
+        emailError.textContent = data.errors.email;
+        passwordError.textContent = data.errors.password;
+        phoneError.textContent = data.errors.phoneNumber;
+      }
+      if (data.user) {
+        location.assign("/");
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  });
+</script>
+
+<%- include("partials/Footer") %>

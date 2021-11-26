@@ -1,0 +1,118 @@
+<%- include('partials/header'); -%>
+
+<header>
+  <div class="account-details">
+    <h2>My Account</h2>
+    <p class="error"></p>
+    <p class="success"></p>
+    <div class="account-detail">
+        <span>Email:</span>
+        <span> <%= userEmail %> </span>
+        <input type="email" name="email" class="email display-none">
+    </div>
+    <div class="account-detail">
+      <span>Phone Number:</span>
+      <span class="phone-number">+1 <%= phoneNumber %> </span>
+      <form class="edit-phone display-none">
+        <input type="phone" name="phone" placeholder="New Phone Number">
+        <button type="submit" class="btn">Save</button>
+      </form>
+      <a class="link change-phone" href="#">Change Phone Number?</a>
+    </div>
+    <div class="account-detail">
+      <span>Password:</span>
+      <form class="edit-password display-none">
+        <input type="password" name="old" placeholder="Old Password">
+        <input type="password" name="new" placeholder="New Password">
+        <input type="password" name="confirm" placeholder="Confirm New Password">
+        <button type="submit" class="btn">Save</button>
+      </form>
+      <a class="link change-password" href="#">Change Password?</a>
+    </div>
+    <a class="btn delete-account danger" href="/delete-account">Delete Account</a>
+  </div>
+</header>
+
+<script>
+  const changePhoneLink = document.querySelector(".change-phone");
+  const changePasswordLink = document.querySelector(".change-password");
+  const phoneForm = document.querySelector("form.edit-phone");
+  const passwordForm = document.querySelector("form.edit-password");
+  const phoneNumberText = document.querySelector(".phone-number");
+  const errorElement = document.querySelector(".error");
+  const successElement = document.querySelector(".success");
+
+  changePhoneLink.addEventListener("click", e => {
+    phoneForm.classList.remove("display-none");
+    changePhoneLink.classList.add("display-none");
+    phoneNumberText.classList.add("display-none")
+  })
+
+  changePasswordLink.addEventListener("click", e => {
+    passwordForm.classList.remove("display-none");
+    changePasswordLink.classList.add("display-none");
+  })
+
+  phoneForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    errorElement.textContent = "";
+    successElement.textContent = "";
+
+    const phoneNumber = phoneForm.phone.value;
+
+    try {
+      const res = await fetch("/edit-phone-number", {
+        method: "PUT",
+        body: JSON.stringify({ phoneNumber }),
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      if (data.error) {
+        errorElement.textContent = data.error;
+      }
+      if (data.phone) {
+        phoneForm.classList.add("display-none");
+        changePhoneLink.classList.remove("display-none");
+        phoneNumberText.textContent = data.phone;
+        phoneNumberText.classList.remove("display-none");
+        successElement.textContent = data.message;
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  })
+
+  passwordForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    errorElement.textContent = "";
+    successElement.textContent = "";
+
+    const oldPassword = passwordForm.old.value;
+    const newPassword = passwordForm.new.value;
+    const confirmNewPassword = passwordForm.confirm.value;
+
+    try {
+      const res = await fetch("/change-password", {
+        method: "PUT",
+        body: JSON.stringify({ oldPassword, newPassword, confirmNewPassword }),
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      if (data.error) {
+        console.log(data);
+        errorElement.textContent = data.error;
+      } else {
+        passwordForm.classList.add("display-none");
+        changePasswordLink.classList.remove("display-none");
+        successElement.textContent = data.message;
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  })
+
+</script>
+  
+<%- include('partials/footer'); -%>

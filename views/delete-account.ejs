@@ -1,0 +1,46 @@
+<%- include('partials/header'); -%>
+
+<header>
+  <div class="smoothie">
+    <img src="/smoothie.png" alt="" />
+  </div>
+  <div class="account-details">
+    <h2>Delete Account</h2>
+    <form>
+        <p class="error"></p>
+        <input type="password" name="password" placeholder="Enter current password">
+        <button type="submit" class="btn delete-account danger">Confirm Deletion</button>
+    </form>
+  </div>
+</header>
+
+<script>
+  const form = document.querySelector("form");
+  const errorElement = document.querySelector(".error");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    errorElement.textContent = "";
+    const enteredPassword = form.password.value;
+
+    try {
+      const res = await fetch("/delete-account", {
+        method: "DELETE",
+        body: JSON.stringify({ enteredPassword }),
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      if (data.error) {
+        errorElement.textContent = data.error;
+      } else {
+        location.assign("/");
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  })
+
+</script>
+  
+<%- include('partials/footer'); -%>

@@ -1,0 +1,104 @@
+<%- include('partials/header'); -%>
+
+<div class="track-courses-title">My Courses</div>
+<div class="loading display-none">
+  <div class="loading-element">
+  </div>
+  <p>Loading...</p>
+</div>
+<form class="add-course-form display-none">
+  <h4>New Course</h4>
+    <label for="courseNumber">Course Number</label>
+    <input type="text" name="courseNumber" autocomplete="off">
+    <p class="error"></p>
+    <div class="add-course-form-buttons">
+      <button class="btn" type="submit">Add</button>
+      <button class="btn danger cancel-add" type="reset">Cancel</button>
+    </div>
+</form>
+<ul class="courses">
+  <% if (courses) { courses.forEach(course => { %> 
+    <li class="course" data-course-number="<%= course.number %>">
+      <h4 class="course-number"><%= course.number %> </h4>
+      <p class="course-name"><%= course.title %> </p>
+      <p class="course-instructor">Instructor: <%= course.instructor %> </p>
+      <p class="course-seats">Seats Open: <%= course.seatsOpen %></p>
+      <p class="course-last-updated">Last Updated: <%= course.lastUpdatedString %> </p>
+      <button class="btn danger stop-tracking">Stop Tracking</button>
+    </li>
+  <% })} %> 
+  <li class="add-course" tabindex="0">
+    <span class="add-course-plus">+</span>
+    <h4>Add Course</h4>
+  </li>
+</ul>
+
+<script>
+  const addCourseBtn = document.querySelector("li.add-course");
+  const addCourseForm = document.querySelector("form.add-course-form");
+  const courseElements = document.querySelectorAll(".course");
+  const loadingElement = document.querySelector(".loading");
+  const errorElement = document.querySelector(".error");
+
+  addCourseBtn.addEventListener("click", e => {
+    addCourseForm.classList.remove("display-none");
+    addCourseForm.classList.add("fly-in-from-top");
+  })
+  
+  addCourseForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    loadingElement.classList.remove("display-none");
+    errorElement.textContent = "";
+    try {
+      const res = await fetch("/track-courses", {
+        method: "POST",
+        body: JSON.stringify({ courseNumber: addCourseForm.courseNumber.value }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const data = await res.json();
+
+      if (data.error) {
+        loadingElement.classList.add("display-none");
+        errorElement.textContent = `An error was recieved from ASU:\n${data.error.trim()}`;
+      }
+
+      if (data.success) {
+        location.assign("/track-courses");
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  })
+
+  addCourseForm.querySelector(".cancel-add").addEventListener("click", e => {
+    e.preventDefault();
+    addCourseForm.classList.add("display-none");
+  })
+
+  courseElements.forEach(courseElement => {
+    courseElement.addEventListener("click", async (e) => {
+      if (!e.target.matches(".stop-tracking")) {
+        return;
+      }
+
+      try {
+        const res = await fetch("/track-courses", {
+          method: "DELETE",
+          body: JSON.stringify({ courseNumber: courseElement.dataset.courseNumber }),
+          headers: { "Content-Type": "application/json" },
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          location.assign("/track-courses");
+        }
+    } catch (err) {
+      console.log(err);
+    }
+    })
+  })
+</script>
+
+<%- include('partials/footer'); -%>

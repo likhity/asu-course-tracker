@@ -1,0 +1,22 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/styles.css" />
+    <title>ASU Course Tracker</title>
+  </head>
+  <body>
+    <nav style="display: flex; align-items: center;">
+      <h1 style="display: flex; align-items: center;"><img src="/logo.png" style="width: 100px;"><a href="/" style="margin-left: 20px; margin-top: -5px;">ASU Course Tracker</a></h1>
+      <ul style="margin-top: -20px; text-align: center;">
+        <% if (username) { %>
+          <p style="margin-right: 20px;">Welcome, <%= username %></p>
+          <li><a href="/track-courses">My Courses</a></li>
+          <li><a href="/account">My Account</a></li>
+          <li><a href="/logout">Log out</a></li>
+        <% } else { %>
+          <li><a href="/login">Log in</a></li>
+          <li><a href="/signup">Sign up</a></li>
+        <% } %>
+      </ul>
+    </nav>
