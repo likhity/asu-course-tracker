@@ -64,9 +64,11 @@ I had a trial balance of $15.50 so I just started using it and didn't worry abou
 
 The project was essentially finished, so I had to figure out how to deploy this thing to the world and make it free for students to use.
 
-If actually deployed this website right now, my remaining trial balance of $14.18 on Twilio will probably quickly run out. If I hit the 512MB limit on the free tier cluster on MongoDB that I'm using for this then the app would no longer function.
+If I actually deployed this website right now, my remaining trial balance of $14.18 on Twilio will probably quickly run out after hundreds of students sign up and start recieving text messages. If I hit the 512MB limit on the free tier cluster on MongoDB that I'm using for this then the app would no longer function
 
-So I gave up on this ~~essentially useless~~ project and decided to just push it to GitHub.
+I'm also in my finals week so continuing this thing would probably tank my grades and I have no interest in doing this anymore.
+
+So I gave up on this ~~essentially useless~~ project and decided to just put it on GitHub.
 
 I was never able to get the teacher that I wanted for CSE310 and I had to take one that starts at 7:30 AM in the morning with a not so amazing teacher.
 
