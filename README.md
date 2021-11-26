@@ -58,7 +58,7 @@ I decided to use Twilio because it's so easy to use. I set up a function `checkF
 
 And then it finally clicked why making this service free would be impossible. I needed to pay 10 or 20 cents for every text that I sent.
 
-I had a trial balance of $15.50 so I just started using it and didn't worry about how I am gonna fund this thing. By the end I had around $14 in my twilio account.
+I had a trial balance of $15.50 so I just started using it and didn't worry about how I am gonna fund this thing. By the end of development I had around $14 in my twilio account.
 
 ![image](/assets/twilio.PNG)
 
