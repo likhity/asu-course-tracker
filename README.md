@@ -8,7 +8,7 @@ I really wanted a good teacher for my CSE310: Data Structures and Algorithms cou
 
 ![image](/assets/cse310.PNG)
 
-I had a positive experience with professor Feng (fake name) in the past, so I wanted to take her. However, the seats for all of her classes were filled.
+I had a positive experience with professor Feng in the past, so I wanted to take her. However, the seats for all of her classes were filled.
 
 ![image](/assets/310_seats.PNG)
 
