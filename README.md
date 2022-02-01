@@ -70,7 +70,7 @@ I'm also in my finals week so continuing this thing would probably tank my grade
 
 So I gave up on this ~~essentially useless~~ project and decided to just put it on GitHub.
 
-I was never able to get the teacher that I wanted for CSE310 and I had to take one that starts at 7:30 AM in the morning with a not so amazing teacher.
+I was never able to get the teacher that I originally wanted for CSE310.
 
 And I lived ~~happily~~ ever after. The End.
 
