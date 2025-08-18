@@ -198,27 +198,17 @@ namespace ASUCourseTracker.API.Controllers
 
             if (existingTracking != null)
             {
-                if (existingTracking.IsActive)
-                {
-                    return BadRequest($"Course {courseNumber} is already being tracked");
-                }
-                else
-                {
-                    existingTracking.IsActive = true;
-                    existingTracking.TrackedAt = DateTime.UtcNow;
-                }
+                return BadRequest($"Course {courseNumber} is already being tracked");
             }
-            else
+
+            var userCourse = new UserCourse
             {
-                var userCourse = new UserCourse
-                {
-                    UserId = userId,
-                    CourseId = course.Id,
-                    TrackedAt = DateTime.UtcNow,
-                    IsActive = true
-                };
-                _context.UserCourses.Add(userCourse);
-            }
+                UserId = userId,
+                CourseId = course.Id,
+                TrackedAt = DateTime.UtcNow,
+                IsActive = true
+            };
+            _context.UserCourses.Add(userCourse);
 
             await _context.SaveChangesAsync();
 
@@ -261,14 +251,14 @@ namespace ASUCourseTracker.API.Controllers
             }
 
             var tracking = await _context.UserCourses
-                .FirstOrDefaultAsync(uc => uc.UserId == userId && uc.CourseId == course.Id && uc.IsActive);
+                .FirstOrDefaultAsync(uc => uc.UserId == userId && uc.CourseId == course.Id);
 
             if (tracking == null)
             {
                 return NotFound($"Course {courseNumber} tracking not found");
             }
 
-            tracking.IsActive = false;
+            _context.UserCourses.Remove(tracking);
             await _context.SaveChangesAsync();
 
             return Ok(new { message = $"Course {courseNumber} tracking stopped" });
@@ -285,7 +275,7 @@ namespace ASUCourseTracker.API.Controllers
             }
 
             var trackedCourses = await _context.UserCourses
-                .Where(uc => uc.UserId == userId && uc.IsActive)
+                .Where(uc => uc.UserId == userId)
                 .Include(uc => uc.Course)
                 .Select(uc => new TrackedCourseDto
                 {

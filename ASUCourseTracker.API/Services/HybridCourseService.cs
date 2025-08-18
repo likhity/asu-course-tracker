@@ -167,7 +167,7 @@ namespace ASUCourseTracker.API.Services
                 
                 description = $"Location: {meeting.facilityDescription} ({meeting.buildingDescription}), " +
                             $"Days: {days}, Time: {startTime} - {endTime}, " +
-                            $"Capacity: {classInfo.enrollmentCapacity} seats";
+                            $"Capacity: {classInfo.enrollmentCapacity}";
                 _logger.LogInformation($"Built description: {description}");
             }
             else

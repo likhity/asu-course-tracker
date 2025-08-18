@@ -45,7 +45,6 @@ namespace ASUCourseTracker.API.Services
             var trackedCourses = await context.UserCourses
                 .Include(uc => uc.Course)
                 .Include(uc => uc.User)
-                .Where(uc => uc.IsActive)
                 .ToListAsync();
 
             foreach (var trackedCourse in trackedCourses)

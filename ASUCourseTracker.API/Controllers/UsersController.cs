@@ -30,7 +30,7 @@ namespace ASUCourseTracker.API.Controllers
             }
 
             var user = await _context.Users
-                .Include(u => u.UserCourses.Where(uc => uc.IsActive))
+                .Include(u => u.UserCourses)
                 .ThenInclude(uc => uc.Course)
                 .FirstOrDefaultAsync(u => u.Id == userId);
 
