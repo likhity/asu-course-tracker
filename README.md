@@ -2,6 +2,10 @@
 
 A way to track any course at ASU and get a text message sent to you whenever the number of seats for a course changes.
 
+Now built as a React Native app with a .NET Core backend.
+
+Will be available for download soon.
+
 ## Story
 
 I really wanted a good teacher for my CSE310: Data Structures and Algorithms course at ASU because it is a very important course.
