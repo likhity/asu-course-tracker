@@ -17,7 +17,10 @@ namespace ASUCourseTracker.API.Models
         [Required]
         public string PhoneNumber { get; set; } = string.Empty;
 
-        public string Role { get; set; } = "User"; // Add this line
+        public string Role { get; set; } = "User";
+
+        // Expo push notification token
+        public string? ExpoPushToken { get; set; }
 
         public ICollection<UserCourse> UserCourses { get; set; } = new List<UserCourse>();
 

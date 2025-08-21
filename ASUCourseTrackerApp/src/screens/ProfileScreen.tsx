@@ -14,11 +14,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { RootStackParamList } from '../types';
+import notificationService from '../services/notificationService';
 
 type ProfileScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 const ProfileScreen = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, deleteAccount, isLoading } = useAuth();
   const { theme } = useTheme();
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const insets = useSafeAreaInsets();
@@ -45,6 +46,58 @@ const ProfileScreen = () => {
         },
       ]
     );
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete your account? This action cannot be undone and will permanently remove all your data including tracked courses.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete Account',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteAccount();
+              Alert.alert(
+                'Account Deleted',
+                'Your account has been successfully deleted.',
+                [{ text: 'OK' }]
+              );
+            } catch (error) {
+              console.error('Delete account error:', error);
+              Alert.alert(
+                'Error',
+                'Failed to delete account. Please try again.',
+                [{ text: 'OK' }]
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleTestNotification = async () => {
+    try {
+      await notificationService.sendTestNotification();
+      Alert.alert(
+        'Test Notification Sent',
+        'A test notification has been sent to your device.',
+        [{ text: 'OK' }]
+      );
+    } catch (error) {
+      console.error('Test notification error:', error);
+      Alert.alert(
+        'Error',
+        'Failed to send test notification. Make sure you are logged in and have granted notification permissions.',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   const styles = createStyles(theme);
@@ -85,9 +138,9 @@ const ProfileScreen = () => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>App Settings</Text>
         
-        <TouchableOpacity style={styles.settingRow}>
+        <TouchableOpacity style={styles.settingRow} onPress={handleTestNotification}>
           <Ionicons name="notifications-outline" size={20} color="#666" />
-          <Text style={styles.settingLabel}>Push Notifications</Text>
+          <Text style={styles.settingLabel}>Test Notification</Text>
           <Ionicons name="chevron-forward" size={20} color="#ccc" />
         </TouchableOpacity>
 
@@ -130,8 +183,19 @@ const ProfileScreen = () => {
       </View>
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Ionicons name="log-out-outline" size={20} color="#d32f2f" />
+        <Ionicons name="log-out-outline" size={20} color={theme.colors.error} />
         <Text style={styles.logoutButtonText}>Logout</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity 
+        style={[styles.deleteButton, isLoading && styles.disabledButton]} 
+        onPress={handleDeleteAccount}
+        disabled={isLoading}
+      >
+        <Ionicons name="trash-outline" size={20} color="#b71c1c" />
+        <Text style={styles.deleteButtonText}>
+          {isLoading ? 'Processing...' : 'Delete Account'}
+        </Text>
       </TouchableOpacity>
 
       <View style={styles.footer}>
@@ -242,6 +306,35 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.card,
+    margin: 20,
+    marginTop: 10,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#b71c1c',
+    shadowColor: theme.colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  deleteButtonText: {
+    color: '#b71c1c',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
   footer: {
     alignItems: 'center',

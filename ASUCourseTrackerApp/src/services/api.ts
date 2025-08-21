@@ -87,6 +87,10 @@ class ApiService {
     return response.data;
   }
 
+  async deleteAccount(): Promise<void> {
+    await this.api.delete('/users/account');
+  }
+
   // Course endpoints
   async getTrackedCourses(): Promise<TrackedCourseDto[]> {
     const response: AxiosResponse<TrackedCourseDto[]> = await this.api.get('/courses/tracked');
@@ -129,6 +133,21 @@ class ApiService {
   async searchCourses(query: string): Promise<CourseDto[]> {
     const response: AxiosResponse<CourseDto[]> = await this.api.get(`/courses/search?q=${encodeURIComponent(query)}`);
     return response.data;
+  }
+
+  // Push Notification endpoints (Expo)
+  async registerPushToken(expoPushToken: string): Promise<void> {
+    await this.api.post('/users/register-push-token', { 
+      expoPushToken 
+    });
+  }
+
+  async sendTestNotification(): Promise<void> {
+    await this.api.post('/users/test-notification');
+  }
+
+  async unregisterPushToken(): Promise<void> {
+    await this.api.delete('/users/unregister-push-token');
   }
 }
 

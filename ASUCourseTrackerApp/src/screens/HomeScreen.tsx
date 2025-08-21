@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { RootStackParamList } from '../types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { TrackedCourseDto } from '../types';
@@ -31,11 +31,7 @@ const HomeScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [hasMoreCourses, setHasMoreCourses] = useState(false);
 
-  useEffect(() => {
-    loadRecentCourses();
-  }, []);
-
-  const loadRecentCourses = async () => {
+  const loadRecentCourses = useCallback(async () => {
     try {
       setIsLoading(true);
       const courses = await apiService.getTrackedCourses();
@@ -50,7 +46,14 @@ const HomeScreen = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  // Refresh courses every time screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      loadRecentCourses();
+    }, [loadRecentCourses])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -117,19 +120,19 @@ const HomeScreen = () => {
     >
       <View style={[styles.header, { paddingTop: insets.top }]}>
         <Text style={styles.greeting}>{getGreeting()}, {user?.email?.split('@')[0]}!</Text>
-        <Text style={styles.subtitle}>Welcome to ASU Course Tracker</Text>
+        <Text style={styles.subtitle}>Welcome to ASU Course Tracker!</Text>
       </View>
 
       <View style={styles.quickActions}>
         <Text style={styles.sectionTitle}>Quick Actions</Text>
         <View style={styles.actionButtons}>
           <TouchableOpacity style={styles.actionButton} onPress={navigateToCourses}>
-            <Ionicons name="book-outline" size={24} color="#1976d2" />
+            <Ionicons name="book-outline" size={24} color={theme.colors.primary} />
             <Text style={styles.actionButtonText}>View Courses</Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.actionButton} onPress={navigateToTrackCourse}>
-            <Ionicons name="add-circle-outline" size={24} color="#1976d2" />
+            <Ionicons name="add-circle-outline" size={24} color={theme.colors.primary} />
             <Text style={styles.actionButtonText}>Track Course</Text>
           </TouchableOpacity>
         </View>
@@ -197,7 +200,7 @@ const HomeScreen = () => {
                   onPress={() => navigation.navigate('Courses' as any)}
                 >
                   <Text style={styles.seeAllText}>See All Courses</Text>
-                  <Ionicons name="arrow-forward" size={16} color="#1976d2" />
+                  <Ionicons name="arrow-forward" size={16} color={theme.colors.primary} />
                 </TouchableOpacity>
               </>
             )}
@@ -220,13 +223,13 @@ const HomeScreen = () => {
         <Text style={styles.sectionTitle}>Quick Stats</Text>
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
-            <Ionicons name="book-outline" size={24} color="#4caf50" />
+            <Ionicons name="book-outline" size={24} color={theme.colors.success} />
             <Text style={styles.statNumber}>{recentCourses.length}</Text>
             <Text style={styles.statLabel}>Tracked Courses</Text>
           </View>
           
           <View style={styles.statCard}>
-            <Ionicons name="time-outline" size={24} color="#ff9800" />
+            <Ionicons name="time-outline" size={24} color={theme.colors.warning} />
             <Text style={styles.statNumber}>10</Text>
             <Text style={styles.statLabel}>Min Check Interval</Text>
           </View>
@@ -407,7 +410,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     textAlign: 'center',
   },
   addFirstCourseButton: {
-    backgroundColor: '#1976d2',
+    backgroundColor: theme.colors.primary,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,

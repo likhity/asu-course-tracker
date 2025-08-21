@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { RootStackParamList } from '../types';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -31,15 +31,7 @@ const CoursesScreen = () => {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
 
-  useEffect(() => {
-    loadCourses();
-  }, []);
-
-  useEffect(() => {
-    filterCourses();
-  }, [searchQuery, courses]);
-
-  const loadCourses = async () => {
+  const loadCourses = useCallback(async () => {
     try {
       setIsLoading(true);
       const fetchedCourses = await apiService.getTrackedCourses();
@@ -54,7 +46,18 @@ const CoursesScreen = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  // Refresh courses every time screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      loadCourses();
+    }, [loadCourses])
+  );
+
+  useEffect(() => {
+    filterCourses();
+  }, [searchQuery, courses]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -328,7 +331,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     textAlign: 'center',
   },
   addFirstCourseButton: {
-    backgroundColor: '#1976d2',
+    backgroundColor: theme.colors.primary,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,

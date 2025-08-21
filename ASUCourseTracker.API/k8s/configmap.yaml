@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-config
+  namespace: asu-course-tracker
+data:
+  DB_HOST: "postgres-service"
+  DB_NAME: "asu_course_tracker"
+  DB_USER: "postgres"
+  DB_PORT: "5432"
+  JWT_ISSUER: "ASU-Course-Tracker-API"
+  JWT_AUDIENCE: "ASU-Course-Tracker-Client"
+  DEFAULT_TERM: "2257"
+  CHECK_INTERVAL_MINUTES: "10"
+  ASPNETCORE_ENVIRONMENT: "Production"
+

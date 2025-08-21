@@ -18,10 +18,13 @@ export interface Theme {
     textSecondary: string;
     textTertiary: string;
     
-    // Primary colors
+    // Primary colors (ASU Maroon)
     primary: string;
     primaryLight: string;
     primaryDark: string;
+    
+    // Accent color (ASU Gold)
+    accent: string;
     
     // Border and separator colors
     border: string;
@@ -29,7 +32,7 @@ export interface Theme {
     
     // Status colors
     success: string;
-    warning: string;
+    warning: string; // Uses ASU Gold
     error: string;
     
     // Special colors
@@ -50,15 +53,17 @@ const lightTheme: Theme = {
     textSecondary: '#666666',
     textTertiary: '#999999',
     
-    primary: '#1976d2',
-    primaryLight: 'rgba(25, 118, 210, 0.1)',
-    primaryDark: '#0d47a1',
+    primary: '#8C1D40',     // ASU Maroon
+    primaryLight: 'rgba(140, 29, 64, 0.1)',
+    primaryDark: '#6B1530',  // Darker Maroon
+    
+    accent: '#FFC627',       // ASU Gold
     
     border: '#e0e0e0',
     separator: '#f0f0f0',
     
     success: '#4caf50',
-    warning: '#ff9800',
+    warning: '#FFC627',      // ASU Gold
     error: '#d32f2f',
     
     shadow: '#000000',
@@ -78,15 +83,17 @@ const darkTheme: Theme = {
     textSecondary: '#b3b3b3',
     textTertiary: '#808080',
     
-    primary: '#42a5f5',
-    primaryLight: 'rgba(66, 165, 245, 0.1)',
-    primaryDark: '#0d47a1',
+    primary: '#B8336A',      // Lighter ASU Maroon for dark mode
+    primaryLight: 'rgba(184, 51, 106, 0.1)',
+    primaryDark: '#6B1530',  // Darker Maroon
+    
+    accent: '#FFD700',       // Brighter ASU Gold for dark mode
     
     border: '#404040',
     separator: '#333333',
     
     success: '#66bb6a',
-    warning: '#ffb74d',
+    warning: '#FFD700',      // Brighter Gold for dark mode
     error: '#f44336',
     
     shadow: '#000000',

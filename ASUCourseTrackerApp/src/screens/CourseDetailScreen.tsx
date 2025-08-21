@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { RootStackParamList, CourseDto } from '../types';
 import { StackNavigationProp, StackScreenProps } from '@react-navigation/stack';
@@ -29,23 +29,26 @@ const CourseDetailScreen = () => {
   const insets = useSafeAreaInsets();
   const { course } = route.params;
 
-  useEffect(() => {
-    const fetchCourseData = async () => {
-      try {
-        setIsLoadingData(true);
-        const fullCourseData = await apiService.getCourse(course.number);
-        setCourseData(fullCourseData);
-      } catch (error) {
-        console.error('Failed to fetch course details:', error);
-        // Fallback to the course data passed via navigation
-        setCourseData(course);
-      } finally {
-        setIsLoadingData(false);
-      }
-    };
+  const fetchCourseData = useCallback(async () => {
+    try {
+      setIsLoadingData(true);
+      const fullCourseData = await apiService.getCourse(course.number);
+      setCourseData(fullCourseData);
+    } catch (error) {
+      console.error('Failed to fetch course details:', error);
+      // Fallback to the course data passed via navigation
+      setCourseData(course);
+    } finally {
+      setIsLoadingData(false);
+    }
+  }, [course.number, course]);
 
-    fetchCourseData();
-  }, [course.number]);
+  // Refresh course data every time screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      fetchCourseData();
+    }, [fetchCourseData])
+  );
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -56,7 +59,6 @@ const CourseDetailScreen = () => {
   };
 
   const getStatusColor = (seatsOpen: string) => {
-    console.log(seatsOpen);
     const seats = seatsOpen.toLowerCase();
     
     // Handle new format: "X of Y open seats"
@@ -254,7 +256,7 @@ const CourseDetailScreen = () => {
           onPress={handleStopTracking}
           disabled={isLoading}
         >
-          <Ionicons name="stop-circle-outline" size={20} color="#d32f2f" />
+          <Ionicons name="stop-circle-outline" size={20} color={theme.colors.error} />
           <Text style={styles.stopTrackingButtonText}>
             {isLoading ? 'Stopping...' : 'Stop Tracking Course'}
           </Text>

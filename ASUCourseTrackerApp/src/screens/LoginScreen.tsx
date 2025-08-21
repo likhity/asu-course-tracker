@@ -73,7 +73,7 @@ const LoginScreen = () => {
         ]}
       >
         <View style={styles.header}>
-          <Ionicons name="school" size={80} color="#1976d2" />
+          <Ionicons name="school" size={80} color="#8C1D40" />
           <Text style={styles.title}>ASU Course Tracker</Text>
           <Text style={styles.subtitle}>Sign in to your account</Text>
         </View>
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1976d2',
+    color: '#8C1D40',
     marginTop: 16,
     textAlign: 'center',
   },
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   loginButton: {
-    backgroundColor: '#1976d2',
+    backgroundColor: '#8C1D40',
     borderRadius: 8,
     paddingVertical: 16,
     alignItems: 'center',
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   linkText: {
-    color: '#1976d2',
+    color: '#8C1D40',
     fontSize: 14,
     fontWeight: '600',
   },

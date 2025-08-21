@@ -1,0 +1,59 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+*.md
+
+# Build artifacts
+bin/
+obj/
+out/
+publish/
+
+# IDE files
+.vs/
+.vscode/
+*.user
+*.suo
+*.cache
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Package manager files
+node_modules/
+packages/
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+
+# Logs
+logs/
+*.log
+
+# Test files
+*Tests/
+*Test/
+TestResults/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Development templates
+appsettings.Development.Template.json
+appsettings.Development.json
+
+# Docker files
+Dockerfile*
+docker-compose*
+.dockerignore
+
+

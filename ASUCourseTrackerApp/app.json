@@ -10,19 +10,22 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1976d2"
+      "backgroundColor": "#8C1D40"
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.asucoursetracker.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
+      },
+      "entitlements": {
+        "aps-environment": "development"
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1976d2"
+        "backgroundColor": "#8C1D40"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.asucoursetracker.app"
@@ -31,10 +34,18 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#8C1D40",
+          "defaultChannel": "default"
+        }
+      ]
     ],
     "description": "Track ASU courses and get notified when seats become available",
-    "primaryColor": "#1976d2",
+    "primaryColor": "#8C1D40",
     "platforms": [
       "ios",
       "android",

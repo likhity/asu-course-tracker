@@ -5,6 +5,7 @@ using System.Text;
 using ASUCourseTracker.API.Data;
 using ASUCourseTracker.API.Services;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add environment variable support
@@ -43,6 +44,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         // Add Services
         builder.Services.AddScoped<JwtService>();
         builder.Services.AddScoped<HybridCourseService>(); // Hybrid service for API + scraping
+        builder.Services.AddScoped<ExpoNotificationService>(); // Expo push notifications
         builder.Services.AddHostedService<CourseTrackingService>();
 
 // Add JWT Authentication

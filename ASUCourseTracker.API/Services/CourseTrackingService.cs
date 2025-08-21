@@ -53,21 +53,39 @@ namespace ASUCourseTracker.API.Services
                 {
                     var currentSeats = await GetCurrentSeatsFromASU(trackedCourse.Course.Number);
 
+                    // Always update LastUpdated to show when the course was last checked
+                    trackedCourse.Course.LastUpdated = DateTime.UtcNow;
+
                     if (currentSeats != trackedCourse.Course.SeatsOpen)
                     {
                         var oldSeats = trackedCourse.Course.SeatsOpen;
                         trackedCourse.Course.SeatsOpen = currentSeats;
-                        trackedCourse.Course.LastUpdated = DateTime.UtcNow;
 
                         _logger.LogInformation($"Seats changed for course {trackedCourse.Course.Number}: {oldSeats} -> {currentSeats}");
 
-                        // TODO: Send push notification here when seats change
-                        await SendSeatChangeNotification(trackedCourse, oldSeats, currentSeats);
+                        // Only send notification if seats increased (more seats became available)
+                        if (HasSeatsIncreased(oldSeats, currentSeats))
+                        {
+                            _logger.LogInformation($"Seats increased for course {trackedCourse.Course.Number} - sending notification");
+                            await SendSeatChangeNotification(trackedCourse, oldSeats, currentSeats);
+                        }
+                        else
+                        {
+                            _logger.LogDebug($"Seats decreased or same for course {trackedCourse.Course.Number} - no notification sent");
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogDebug($"No seat change for course {trackedCourse.Course.Number}: {currentSeats}");
                     }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, $"Error checking course {trackedCourse.Course.Number}");
+                    
+                    // Still update LastUpdated even if there was an error, 
+                    // so users know the system attempted to check the course
+                    trackedCourse.Course.LastUpdated = DateTime.UtcNow;
                 }
             }
 
@@ -103,19 +121,93 @@ namespace ASUCourseTracker.API.Services
             }
         }
 
+        /// <summary>
+        /// Check if the number of available seats has increased
+        /// Parses seat strings like "3 of 30 open seats" to compare available seat counts
+        /// </summary>
+        private bool HasSeatsIncreased(string oldSeats, string newSeats)
+        {
+            try
+            {
+                var oldAvailable = ExtractAvailableSeats(oldSeats);
+                var newAvailable = ExtractAvailableSeats(newSeats);
+                
+                if (oldAvailable.HasValue && newAvailable.HasValue)
+                {
+                    bool increased = newAvailable.Value > oldAvailable.Value;
+                    _logger.LogDebug($"Seat comparison: {oldAvailable} -> {newAvailable} (increased: {increased})");
+                    return increased;
+                }
+                
+                // If we can't parse the numbers, assume it's worth notifying to be safe
+                _logger.LogWarning($"Could not parse seat numbers for comparison: '{oldSeats}' vs '{newSeats}'");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error comparing seat counts: '{oldSeats}' vs '{newSeats}'");
+                return true; // Default to sending notification if there's an error
+            }
+        }
 
+        /// <summary>
+        /// Extract the number of available seats from a string like "3 of 30 open seats"
+        /// </summary>
+        private int? ExtractAvailableSeats(string seatsString)
+        {
+            if (string.IsNullOrEmpty(seatsString))
+                return null;
+
+            try
+            {
+                // Handle formats like "3 of 30 open seats", "0 of 120 open seats", etc.
+                var parts = seatsString.Split(' ');
+                if (parts.Length >= 1 && int.TryParse(parts[0], out int availableSeats))
+                {
+                    return availableSeats;
+                }
+
+                // Handle other possible formats
+                // If format changes, we can add more parsing logic here
+                _logger.LogWarning($"Unexpected seat string format: '{seatsString}'");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error parsing seat string: '{seatsString}'");
+                return null;
+            }
+        }
 
         private async Task SendSeatChangeNotification(UserCourse trackedCourse, string oldSeats, string newSeats)
         {
             try
             {
-                // TODO: Implement push notification logic here
-                // This is where you'll integrate with Firebase Cloud Messaging
+                if (!string.IsNullOrEmpty(trackedCourse.User.ExpoPushToken))
+                {
+                    using var scope = _serviceProvider.CreateScope();
+                    var expoNotificationService = scope.ServiceProvider.GetRequiredService<ExpoNotificationService>();
+                    
+                    bool success = await expoNotificationService.SendCourseNotificationAsync(
+                        trackedCourse.User,
+                        trackedCourse.Course.CourseCode ?? trackedCourse.Course.Number,
+                        oldSeats,
+                        newSeats
+                    );
 
-                _logger.LogInformation($"Would send notification to user {trackedCourse.User.Email} about course {trackedCourse.Course.Number}: seats changed from {oldSeats} to {newSeats}");
-
-                // Placeholder for push notification logic
-                // await _firebaseService.SendNotificationAsync(trackedCourse.User, message);
+                    if (success)
+                    {
+                        _logger.LogInformation($"Expo push notification sent to user {trackedCourse.User.Email} for course {trackedCourse.Course.Number}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"Failed to send Expo push notification to user {trackedCourse.User.Email}");
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning($"No Expo push token for user {trackedCourse.User.Email} - notification not sent");
+                }
             }
             catch (Exception ex)
             {

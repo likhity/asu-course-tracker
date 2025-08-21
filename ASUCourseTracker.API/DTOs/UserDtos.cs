@@ -14,4 +14,15 @@
     {
         public string PhoneNumber { get; set; } = string.Empty;
     }
+
+    public class RegisterExpoPushTokenDto
+    {
+        public string ExpoPushToken { get; set; } = string.Empty;
+    }
+
+    public class ExpoPushTokenResponseDto
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; } = string.Empty;
+    }
 }

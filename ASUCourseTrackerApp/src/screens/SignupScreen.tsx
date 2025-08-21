@@ -22,6 +22,7 @@ type SignupScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Signu
 const SignupScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -30,7 +31,7 @@ const SignupScreen = () => {
   const insets = useSafeAreaInsets();
 
   const handleSignup = async () => {
-    if (!email.trim() || !password.trim()) {
+    if (!email.trim() || !password.trim() || !phoneNumber.trim()) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -45,9 +46,14 @@ const SignupScreen = () => {
       return;
     }
 
+    if (phoneNumber.length < 10) {
+      Alert.alert('Error', 'Please enter a valid phone number');
+      return;
+    }
+
     try {
       setIsLoading(true);
-      await signup(email.trim(), password);
+      await signup(email.trim(), password, phoneNumber.trim());
       // Navigation will happen automatically through AuthContext
     } catch (error: any) {
       Alert.alert(
@@ -75,7 +81,7 @@ const SignupScreen = () => {
         ]}
       >
         <View style={styles.header}>
-          <Ionicons name="school" size={80} color="#1976d2" />
+          <Ionicons name="school" size={80} color="#8C1D40" />
           <Text style={styles.title}>ASU Course Tracker</Text>
           <Text style={styles.subtitle}>Create your account</Text>
         </View>
@@ -89,6 +95,20 @@ const SignupScreen = () => {
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!isLoading}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Ionicons name="call-outline" size={20} color="#666" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Phone Number"
+              value={phoneNumber}
+              onChangeText={setPhoneNumber}
+              keyboardType="phone-pad"
               autoCapitalize="none"
               autoCorrect={false}
               editable={!isLoading}
@@ -160,7 +180,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1976d2',
+    color: '#8C1D40',
     marginTop: 16,
     textAlign: 'center',
   },
@@ -207,7 +227,7 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   signupButton: {
-    backgroundColor: '#1976d2',
+    backgroundColor: '#8C1D40',
     borderRadius: 8,
     paddingVertical: 16,
     alignItems: 'center',
@@ -232,7 +252,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   linkText: {
-    color: '#1976d2',
+    color: '#8C1D40',
     fontSize: 14,
     fontWeight: '600',
   },

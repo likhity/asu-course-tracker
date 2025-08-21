@@ -2,14 +2,16 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthResponseDto, User } from '../types';
 import apiService from '../services/api';
+import notificationService from '../services/notificationService';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string, phoneNumber: string) => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
@@ -53,6 +55,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             email,
             lastLoginAt: lastLoginAt || undefined,
           });
+          
+          // Register push token if user is already authenticated
+          try {
+            const tokenRegistered = await notificationService.registerWithBackend();
+            if (tokenRegistered) {
+              console.log('AuthContext: Push token registered on app start');
+            }
+          } catch (error) {
+            console.warn('AuthContext: Failed to register push token on app start (non-critical):', error);
+          }
         }
       }
     } catch (error) {
@@ -88,6 +100,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('AuthContext: Setting user state to:', userData);
       setUser(userData);
       console.log('AuthContext: User state updated, isAuthenticated should be:', !!userData);
+      
+      // Register push token with backend after successful login
+      try {
+        const tokenRegistered = await notificationService.registerWithBackend();
+        if (tokenRegistered) {
+          console.log('AuthContext: Push token registered successfully');
+        }
+      } catch (error) {
+        console.warn('AuthContext: Failed to register push token (non-critical):', error);
+      }
     } catch (error) {
       console.error('AuthContext: Login error:', error);
       throw error;
@@ -96,10 +118,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const signup = async (email: string, password: string) => {
+  const signup = async (email: string, password: string, phoneNumber: string) => {
     try {
       setIsLoading(true);
-      const response: AuthResponseDto = await apiService.signup({ email, password });
+      const response: AuthResponseDto = await apiService.signup({ email, password, phoneNumber });
       
       // Store tokens and user data
       await AsyncStorage.multiSet([
@@ -116,6 +138,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         email: response.email,
         lastLoginAt: response.lastLoginAt || new Date().toISOString(),
       });
+      
+      // Register push token with backend after successful signup
+      try {
+        const tokenRegistered = await notificationService.registerWithBackend();
+        if (tokenRegistered) {
+          console.log('AuthContext: Push token registered successfully after signup');
+        }
+      } catch (error) {
+        console.warn('AuthContext: Failed to register push token after signup (non-critical):', error);
+      }
     } catch (error) {
       console.error('Signup error:', error);
       throw error;
@@ -142,6 +174,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const deleteAccount = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Call the API to delete the account
+      await apiService.deleteAccount();
+      
+      // Clear stored data (same as logout)
+      await AsyncStorage.multiRemove([
+        'accessToken',
+        'refreshToken',
+        'userId',
+        'userEmail',
+        'lastLoginAt',
+      ]);
+      
+      // Clear user state
+      setUser(null);
+    } catch (error) {
+      console.error('Delete account error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const refreshUser = async () => {
     // This could fetch fresh user data from the API
     // For now, we'll just re-check the auth status
@@ -155,6 +213,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     signup,
     logout,
+    deleteAccount,
     refreshUser,
   };
 
