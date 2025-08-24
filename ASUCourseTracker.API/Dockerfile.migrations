@@ -1,0 +1,24 @@
+# Dockerfile for running database migrations
+# This image includes the EF Core tools for running migrations
+
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS migration-runner
+
+WORKDIR /src
+
+# Copy project file and restore dependencies (includes EF tools)
+COPY ASUCourseTracker.API.csproj .
+RUN dotnet restore
+RUN dotnet tool install --global dotnet-ef
+
+# Copy source code
+COPY . .
+
+# Make sure EF tools are in PATH
+ENV PATH="$PATH:/root/.dotnet/tools"
+
+# Copy migration scripts
+COPY scripts/ /scripts/
+RUN chmod +x /scripts/*.sh
+
+# Default command runs migrations
+ENTRYPOINT ["/scripts/run-migrations.sh"]

@@ -42,6 +42,15 @@ node_modules
 node_modules/
 jspm_packages/
 
+# Production secrets - never commit these
+k8s/
+k8s/secret-production.yaml
+k8s/postgres-admin-secret.yaml
+k8s/values-prod.yaml
+*.prod.yaml
+**/secrets/
+.aws/credentials
+
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
 
@@ -417,9 +426,7 @@ FodyWeavers.xsd
 
 ## Environment Variables & Secrets
 appsettings.Development.json
-appsettings.Production.json
 appsettings.Staging.json
-appsettings.json
 *.pfx
 *.key
 *.pem

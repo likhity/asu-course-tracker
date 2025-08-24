@@ -13,6 +13,12 @@ RUN dotnet build -c Release -o /app/build
 # Publish the application
 RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
 
+# Install Playwright and browsers in the build stage
+RUN dotnet tool install --global Microsoft.Playwright.CLI
+ENV PATH="$PATH:/root/.dotnet/tools"
+RUN playwright install chromium
+RUN playwright install-deps chromium
+
 # Use the official .NET 9 runtime image for the final image
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 WORKDIR /app
@@ -20,6 +26,7 @@ WORKDIR /app
 # Install required packages for Selenium/Playwright if needed
 RUN apt-get update && apt-get install -y \
     wget \
+    curl \
     gnupg \
     ca-certificates \
     chromium \
@@ -35,7 +42,11 @@ COPY --from=build /app/publish .
 
 # Create a non-root user for security
 RUN groupadd -r appgroup && useradd -r -g appgroup appuser
-RUN chown -R appuser:appgroup /app
+
+# Copy Playwright browsers from build stage and set permissions
+COPY --from=build /root/.cache/ms-playwright /home/appuser/.cache/ms-playwright
+RUN chown -R appuser:appgroup /app /home/appuser/.cache
+
 USER appuser
 
 # Expose the port

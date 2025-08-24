@@ -11,16 +11,31 @@ var builder = WebApplication.CreateBuilder(args);
 // Add environment variable support
 builder.Configuration.AddEnvironmentVariables();
 
-// Replace placeholder values with environment variables
+// Build connection string from environment variables or use default from config
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-if (connectionString != null)
+
+// Check if we should build connection string from individual environment variables
+var dbHost = Environment.GetEnvironmentVariable("DB_HOST");
+var dbName = Environment.GetEnvironmentVariable("DB_NAME");
+var dbUser = Environment.GetEnvironmentVariable("DB_USER");
+var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD");
+var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";
+
+if (!string.IsNullOrEmpty(dbHost) && !string.IsNullOrEmpty(dbName) && 
+    !string.IsNullOrEmpty(dbUser) && !string.IsNullOrEmpty(dbPassword))
 {
-    var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD");
+    // Build connection string from environment variables (for RDS/production)
+    connectionString = $"Host={dbHost};Database={dbName};Username={dbUser};Password={dbPassword};Port={dbPort};SSL Mode=Require;Trust Server Certificate=true;";
+    builder.Configuration["ConnectionStrings:DefaultConnection"] = connectionString;
+}
+else if (connectionString != null && connectionString.Contains("${DB_PASSWORD}"))
+{
+    // Fallback: replace placeholder in existing connection string
     if (!string.IsNullOrEmpty(dbPassword))
     {
         connectionString = connectionString.Replace("${DB_PASSWORD}", dbPassword);
+        builder.Configuration["ConnectionStrings:DefaultConnection"] = connectionString;
     }
-    builder.Configuration["ConnectionStrings:DefaultConnection"] = connectionString;
 }
 
 var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
