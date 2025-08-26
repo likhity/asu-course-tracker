@@ -3,6 +3,9 @@ name: Build and Deploy to GKE
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'ASUCourseTracker.API/**'
+      - '.github/workflows/cd.yml'
 
 env:
   AWS_REGION: us-west-1
