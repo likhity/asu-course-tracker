@@ -1,17 +1,19 @@
 [![CD: Build and Deploy API to GKE](https://github.com/likhity/asu-course-tracker/actions/workflows/cd.yml/badge.svg)](https://github.com/likhity/asu-course-tracker/actions/workflows/cd.yml)
 # ASU Course Tracker
 
-A way to track any course at ASU and get a text message sent to you whenever the number of seats for a course changes.
+A way to track any course at ASU and get a notifcation whenever the number of seats for it changes.
 
 Now built as a React Native app with a .NET Core backend and a PostgreSQL database.
 
-Deployment with Docker containers on GKE (Google Kubernetes Engine), using AWS RDS (Postgres) and AWS ECR for image storage. CI/CD pipeline built with GitHub Actions for automated builds, tests, and deployments.
+Deployment with Docker containers on GKE (Google Kubernetes Engine), using AWS RDS (Postgres) and AWS ECR for image storage. Continous Deployment pipeline built with GitHub Actions for automated builds and deployments.
 
-Originally developed as a monolithic web app with the MVC approach using Node.js, Express.js, EJS for server-side rendering, and MongoDB, with authentication using JSON Web Tokens and texting to student users with Twilio API.
+It was originally developed as a monolithic web app with the MVC approach using Node.js, Express.js, EJS for server-side rendering, and MongoDB, with authentication using JSON Web Tokens and texting to student users with Twilio API (See[ Story](#story)). I decided to revamp the project recently and go all in on deploying an app to production.
 
 Will be available for download soon.
 
 ## Story
+
+*(This was written back in 2022)*
 
 I really wanted a good teacher for my CSE310: Data Structures and Algorithms course at ASU because it is a very important course.
 
