@@ -154,6 +154,12 @@ jobs:
         # Wait for API to be ready
         kubectl wait --for=condition=available --timeout=300s deployment/${{ env.DEPLOYMENT_NAME }} -n asu-course-tracker
         
+        # Restart the deployment to ensure new image is pulled
+        kubectl rollout restart deployment/${{ env.DEPLOYMENT_NAME }} -n asu-course-tracker
+        
+        # Wait for the restart to complete
+        kubectl rollout status deployment/${{ env.DEPLOYMENT_NAME }} -n asu-course-tracker --timeout=300s
+        
         # Run migrations
         kubectl delete job asu-course-tracker-migrations -n asu-course-tracker --ignore-not-found
         envsubst < migration-job.yaml | kubectl apply -f -

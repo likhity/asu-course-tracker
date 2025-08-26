@@ -1,3 +1,4 @@
+[![CD: Build and Deploy API to GKE](https://github.com/likhity/asu-course-tracker/actions/workflows/cd.yml/badge.svg)](https://github.com/likhity/asu-course-tracker/actions/workflows/cd.yml)
 # ASU Course Tracker
 
 A way to track any course at ASU and get a text message sent to you whenever the number of seats for a course changes.
