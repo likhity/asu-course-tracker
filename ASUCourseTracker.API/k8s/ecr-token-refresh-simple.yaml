@@ -1,0 +1,100 @@
+# Simple ECR Token Refresh CronJob for immediate testing
+# Uses your existing aws-creds secret
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ecr-token-refresher-simple
+  namespace: asu-course-tracker
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ecr-token-refresher-simple
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ecr-token-refresher-simple
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ecr-token-refresher-simple
+subjects:
+- kind: ServiceAccount
+  name: ecr-token-refresher-simple
+  namespace: asu-course-tracker
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ecr-token-refresh-simple
+  namespace: asu-course-tracker
+spec:
+  # Run every 11 hours: "0 */11 * * *"
+  schedule: "0 */11 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: ecr-token-refresher-simple
+          restartPolicy: OnFailure
+          containers:
+          - name: ecr-token-refresher
+            image: amazon/aws-cli:latest
+            command:
+            - /bin/bash
+            - -c
+            - |
+              set -e
+              
+              # Configuration
+              AWS_REGION=us-west-1
+              ECR_REGISTRY=936781528055.dkr.ecr.us-west-1.amazonaws.com
+              SECRET_NAME=ecr-secret
+              NAMESPACE=asu-course-tracker
+              
+              echo "Installing kubectl..."
+              # Install kubectl
+              curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+              chmod +x kubectl
+              mv kubectl /usr/local/bin/
+              
+              echo "Getting ECR login token..."
+              # Get ECR login token
+              TOKEN=$(aws ecr get-login-password --region $AWS_REGION)
+              
+              echo "Creating/updating Kubernetes secret..."
+              # Create or update the secret
+              kubectl create secret docker-registry $SECRET_NAME \
+                --docker-server=$ECR_REGISTRY \
+                --docker-username=AWS \
+                --docker-password=$TOKEN \
+                --namespace=$NAMESPACE \
+                --dry-run=client -o yaml | kubectl apply -f -
+              
+              echo "ECR token refreshed successfully at $(date)"
+              
+              # Restart deployments to pick up new secret (optional)
+              echo "Restarting deployments to pick up new credentials..."
+              kubectl rollout restart deployment/asu-course-tracker-api -n $NAMESPACE || true
+            env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-creds
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-creds
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: AWS_DEFAULT_REGION
+              value: "us-west-1"

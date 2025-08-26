@@ -1,0 +1,53 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: asu-course-tracker-migrations
+  namespace: asu-course-tracker
+  labels:
+    app: asu-course-tracker-migrations
+spec:
+  template:
+    metadata:
+      labels:
+        app: asu-course-tracker-migrations
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+      - name: ecr-secret
+      containers:
+      - name: migrations
+        image: ${ECR_MIGRATIONS_IMAGE}
+        env:
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: api-secrets
+              key: DB_HOST
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: api-config
+              key: DB_NAME
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: api-config
+              key: DB_PORT
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-admin-secrets  # Different secret with postgres user
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-admin-secrets
+              key: POSTGRES_PASSWORD
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+  backoffLimit: 3

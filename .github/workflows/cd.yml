@@ -1,0 +1,169 @@
+name: Build and Deploy to GKE
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  AWS_REGION: us-west-1
+  AWS_ACCOUNT_ID: 936781528055
+  ECR_API_REPOSITORY: asu-course-tracker/asu-course-tracker-api
+  ECR_MIGRATIONS_REPOSITORY: asu-course-tracker/asu-course-tracker-migrations
+  GKE_CLUSTER: asu-course-tracker-cluster
+  GKE_LOCATION: us-central1
+  DEPLOYMENT_NAME: asu-course-tracker-api
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  build-api:
+    name: Build and Push API Image
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build and push API image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./ASUCourseTracker.API
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: |
+          ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_API_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_API_REPOSITORY }}:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  build-migrations:
+    name: Build and Push Migrations Image
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build and push migrations image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./ASUCourseTracker.API
+        file: ./ASUCourseTracker.API/Dockerfile.migrations
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: |
+          ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_MIGRATIONS_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_MIGRATIONS_REPOSITORY }}:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy-to-gke:
+    name: Deploy to GKE
+    runs-on: ubuntu-latest
+    needs: [build-api, build-migrations]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Set up Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Get GKE credentials
+      run: |
+        gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --location=${{ env.GKE_LOCATION }}
+
+    - name: Create ECR secret for image pulling
+      run: |
+        kubectl create secret docker-registry ecr-secret \
+          --docker-server=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com \
+          --docker-username=AWS \
+          --docker-password=$(aws ecr get-login-password --region ${{ env.AWS_REGION }}) \
+          --namespace=asu-course-tracker \
+          --dry-run=client -o yaml | kubectl apply -f -
+
+    - name: Apply secrets (production)
+      env:
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+        POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+        POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        ECR_IMAGE: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_API_REPOSITORY }}:${{ env.IMAGE_TAG }}
+      run: |
+        cd ASUCourseTracker.API/k8s
+        envsubst < secret-production-template.yaml | kubectl apply -f -
+        envsubst < postgres-admin-secret-template.yaml | kubectl apply -f -
+
+    - name: Deploy to GKE
+      env:
+        ECR_IMAGE: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_API_REPOSITORY }}:${{ env.IMAGE_TAG }}
+        ECR_MIGRATIONS_IMAGE: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_MIGRATIONS_REPOSITORY }}:${{ env.IMAGE_TAG }}
+      run: |
+        cd ASUCourseTracker.API/k8s
+        
+        # Apply namespace
+        kubectl apply -f namespace.yaml
+        
+        # Apply ConfigMap
+        kubectl apply -f configmap-production.yaml
+                
+        # Render and apply Deployment with image injected at apply-time
+        envsubst < api-deployment.yaml | kubectl apply -f -
+        
+        # Wait for API to be ready
+        kubectl wait --for=condition=available --timeout=300s deployment/${{ env.DEPLOYMENT_NAME }} -n asu-course-tracker
+        
+        # Run migrations
+        kubectl delete job asu-course-tracker-migrations -n asu-course-tracker --ignore-not-found
+        envsubst < migration-job.yaml | kubectl apply -f -
+        
+        # Wait for migrations to complete
+        kubectl wait --for=condition=complete --timeout=300s job/asu-course-tracker-migrations -n asu-course-tracker
+        
+
+    - name: Verify deployment
+      run: |
+        kubectl get pods -n asu-course-tracker
+        kubectl get services -n asu-course-tracker
+

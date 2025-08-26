@@ -4,7 +4,6 @@ metadata:
   name: api-config
   namespace: asu-course-tracker
 data:
-  DB_HOST: "postgres-service"
   DB_NAME: "asu_course_tracker"
   DB_USER: "asu_course_tracker"
   DB_PORT: "5432"
@@ -13,4 +12,3 @@ data:
   DEFAULT_TERM: "2257"
   CHECK_INTERVAL_MINUTES: "10"
   ASPNETCORE_ENVIRONMENT: "Production"
-

@@ -38,12 +38,11 @@ bower_components
 build/Release
 
 # Dependency directories
-node_modules
+node_moduless
 node_modules/
 jspm_packages/
 
 # Production secrets - never commit these
-k8s/
 k8s/secret-production.yaml
 k8s/postgres-admin-secret.yaml
 k8s/values-prod.yaml

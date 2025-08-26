@@ -104,29 +104,99 @@ namespace ASUCourseTracker.API.Services
                 await page.GotoAsync(url);
                 await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-                // Wait for the seats element to appear (much faster than before)
+                // Wait for the React app to load and render content
                 try
                 {
-                    await page.WaitForSelectorAsync("div.class-results-cell.seats", new PageWaitForSelectorOptions
+                    // First wait for the search results container to appear
+                    await page.WaitForSelectorAsync(".classlist-container, .class-results, .search-results", new PageWaitForSelectorOptions
                     {
-                        Timeout = 5000 // Reduced timeout since we only need seats
+                        Timeout = 15000 // Increased timeout for React app to load
                     });
+                    
+                    // Try multiple possible selectors for seats information
+                    var possibleSelectors = new[]
+                    {
+                        "div.class-results-cell.seats",
+                        ".seats-available", 
+                        ".available-seats",
+                        ".class-results-cell:contains('Available')",
+                        ".enrollment-info",
+                        "[data-testid*='seats']",
+                        "[class*='seats']",
+                        "[class*='available']"
+                    };
+                    
+                    foreach (var selector in possibleSelectors)
+                    {
+                        try
+                        {
+                            await page.WaitForSelectorAsync(selector, new PageWaitForSelectorOptions
+                            {
+                                Timeout = 3000
+                            });
+                            _logger.LogInformation($"Found seats element with selector: {selector}");
+                            break;
+                        }
+                        catch (TimeoutException)
+                        {
+                            continue; // Try next selector
+                        }
+                    }
                 }
                 catch (TimeoutException)
                 {
-                    _logger.LogWarning($"Timeout waiting for seats element for {courseNumber}");
+                    _logger.LogWarning($"Timeout waiting for page content to load for {courseNumber}");
+                    
+                    // Log page content for debugging
+                    var pageContent = await page.ContentAsync();
+                    _logger.LogInformation($"Page content for debugging: {pageContent.Substring(0, Math.Min(500, pageContent.Length))}...");
+                    
                     return "Seats information not available";
                 }
 
-                // Get just the seats information
-                var seatsElement = await page.QuerySelectorAsync("div.class-results-cell.seats");
-                if (seatsElement != null)
+                // Try to get seats information with multiple selectors
+                var possibleSeatsSelectors = new[]
                 {
-                    var seatsText = await seatsElement.TextContentAsync();
-                    if (!string.IsNullOrEmpty(seatsText))
+                    "div.class-results-cell.seats",
+                    ".seats-available", 
+                    ".available-seats",
+                    ".enrollment-info",
+                    "[data-testid*='seats']",
+                    "[class*='seats']",
+                    "[class*='available']",
+                    ".class-results-cell", // Fallback to any class results cell
+                };
+                
+                foreach (var selector in possibleSeatsSelectors)
+                {
+                    var seatsElement = await page.QuerySelectorAsync(selector);
+                    if (seatsElement != null)
                     {
-                        _logger.LogInformation($"Successfully scraped seats info for {courseNumber}: {seatsText}");
-                        return seatsText.Trim();
+                        var seatsText = await seatsElement.TextContentAsync();
+                        if (!string.IsNullOrEmpty(seatsText?.Trim()))
+                        {
+                            _logger.LogInformation($"Successfully scraped seats info for {courseNumber} using selector '{selector}': {seatsText}");
+                            return seatsText.Trim();
+                        }
+                    }
+                }
+                
+                // If no specific seats element found, try to get all text content and look for seat patterns
+                var allText = await page.TextContentAsync("body");
+                if (!string.IsNullOrEmpty(allText))
+                {
+                    // Look for common seat patterns in the text
+                    var lines = allText.Split('\n');
+                    foreach (var line in lines)
+                    {
+                        var trimmedLine = line.Trim();
+                        if (trimmedLine.Contains("available", StringComparison.OrdinalIgnoreCase) || 
+                            trimmedLine.Contains("seats", StringComparison.OrdinalIgnoreCase) ||
+                            trimmedLine.Contains("enrollment", StringComparison.OrdinalIgnoreCase))
+                        {
+                            _logger.LogInformation($"Found potential seats info in page text for {courseNumber}: {trimmedLine}");
+                            return trimmedLine;
+                        }
                     }
                 }
 
