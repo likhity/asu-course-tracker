@@ -3,7 +3,11 @@
 
 A way to track any course at ASU and get a text message sent to you whenever the number of seats for a course changes.
 
-Now built as a React Native app with a .NET Core backend.
+Now built as a React Native app with a .NET Core backend and a PostgreSQL database.
+
+Deployed infrastructure with Docker containers on GKE (Google Kubernetes Engine), using AWS RDS (Postgres) and AWS ECR for image storage. CI/CD pipeline built with GitHub Actions for automated builds, tests, and deployments.
+
+Originally developed as a monolithic web app with the MVC approach using Node.js, Express.js, EJS for server-side rendering, and MongoDB, with authentication using JSON Web Tokens and texting to student users with Twilio API.
 
 Will be available for download soon.
 
